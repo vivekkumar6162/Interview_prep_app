@@ -81,12 +81,16 @@ const AuthForm = ({ type }: { type: FormType }) => {
           return;
         }
 
+        console.log('test 11111');
+
         await signIn({
           email,
           idToken,
         });
 
-        toast.success("Signed in successfully.");
+        console.log('test 22222');
+
+        // toast.success("Signed in successfully.");
         router.push("/");
       }
     } catch (error) {
