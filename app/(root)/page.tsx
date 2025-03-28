@@ -1,25 +1,55 @@
 import Link from "next/link";
 import Image from "next/image";
-
 import { Button } from "@/components/ui/button";
 import InterviewCard from "@/components/InterviewCard";
-
 import { getCurrentUser } from "@/lib/actions/auth.action";
 import {
   getInterviewsByUserId,
   getLatestInterviews,
 } from "@/lib/actions/general.action";
 
+// Define TypeScript interfaces for type safety
+interface User {
+  id: string;
+}
+
+// Align Interview interface with API return type (createdAt as string)
+interface Interview {
+  id: string;
+  role: string;
+  type: string;
+  techstack: string[];
+  createdAt: string; // Changed from Date to string to match API
+}
+
 async function Home() {
-  const user = await getCurrentUser();
+  let user: User | null = null;
+  let userInterviews: Interview[] | null = null; // Allow null
+  let allInterviews: Interview[] | null = null; // Allow null
 
-  const [userInterviews, allInterview] = await Promise.all([
-    getInterviewsByUserId(user?.id!),
-    getLatestInterviews({ userId: user?.id! }),
-  ]);
+  try {
+    user = await getCurrentUser();
 
-  const hasPastInterviews = userInterviews?.length! > 0;
-  const hasUpcomingInterviews = allInterview?.length! > 0;
+    // Fetch interviews only if user exists
+    if (user) {
+      [userInterviews, allInterviews] = await Promise.all([
+        getInterviewsByUserId(user.id), // Returns Interview[] | null
+        getLatestInterviews({ userId: user.id }), // Returns Interview[] | null
+      ]);
+    }
+  } catch (error) {
+    console.error("Failed to load interviews:", error);
+    return (
+      <section className="card-cta">
+        <h2>Something went wrong</h2>
+        <p>Please try again later.</p>
+      </section>
+    );
+  }
+
+  // Explicitly handle null/undefined cases for length checks
+  const hasPastInterviews = userInterviews !== null && userInterviews.length > 0;
+  const hasUpcomingInterviews = allInterviews !== null && allInterviews.length > 0;
 
   return (
     <>
@@ -49,19 +79,19 @@ async function Home() {
 
         <div className="interviews-section">
           {hasPastInterviews ? (
-            userInterviews?.map((interview) => (
+            userInterviews!.map((interview) => (
               <InterviewCard
                 key={interview.id}
-                userId={user?.id}
+                userId={user?.id ?? ""}
                 interviewId={interview.id}
                 role={interview.role}
                 type={interview.type}
                 techstack={interview.techstack}
-                createdAt={interview.createdAt}
+                createdAt={interview.createdAt} // Already a string
               />
             ))
           ) : (
-            <p>You haven&apos;t taken any interviews yet</p>
+            <p>You haven't taken any interviews yet</p>
           )}
         </div>
       </section>
@@ -71,15 +101,15 @@ async function Home() {
 
         <div className="interviews-section">
           {hasUpcomingInterviews ? (
-            allInterview?.map((interview) => (
+            allInterviews!.map((interview) => (
               <InterviewCard
                 key={interview.id}
-                userId={user?.id}
+                userId={user?.id ?? ""}
                 interviewId={interview.id}
                 role={interview.role}
                 type={interview.type}
                 techstack={interview.techstack}
-                createdAt={interview.createdAt}
+                createdAt={interview.createdAt} // Already a string
               />
             ))
           ) : (

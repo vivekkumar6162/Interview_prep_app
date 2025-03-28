@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use server";
 
 import { auth, db } from "@/firebase/admin";
@@ -72,15 +73,17 @@ export async function signIn(params: SignInParams) {
 
   try {
     const userRecord = await auth.getUserByEmail(email);
-    if (!userRecord)
+    if (!userRecord){
       return {
         success: false,
         message: "User does not exist. Create an account.",
       };
+    }
+      
 
     await setSessionCookie(idToken);
   } catch (error: any) {
-    console.log("");
+    console.log("error ", error);
 
     return {
       success: false,
